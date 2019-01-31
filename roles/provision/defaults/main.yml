@@ -1,0 +1,4 @@
+libvirt_vm_name: devstack
+libvirt_vm_memory_mb: 8096
+libvirt_vm_vcpus: 2
+tmp_image_path: /tmp/devstack.qcow2

@@ -1,0 +1,26 @@
+<domain type='kvm'>
+  <name>{{ libvirt_vm_name }}</name>
+  <memory>{{ libvirt_vm_memory_mb | int * 1024 }}</memory>
+  <vcpu>{{ libvirt_vm_vcpus }}</vcpu>
+  <clock sync="localtime"/>
+  <os>
+    <type arch='x86_64'>hvm</type>
+  </os>
+  <devices>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='/var/lib/libvirt/images/{{ libvirt_vm_name}}.qcow2'/>
+      <target dev='vda' bus='virtio'/>
+    </disk>
+    <interface type='network'>
+      <source network='default'/>
+      <model type='virtio'/>
+    </interface>
+    <serial type='pty'>
+       <target port='0'/>
+     </serial>
+     <console type='pty'>
+       <target type='serial' port='0'/>
+     </console>
+  </devices>
+</domain>

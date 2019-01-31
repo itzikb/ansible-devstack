@@ -1,0 +1,101 @@
+---
+- name: Install libguestfs-tools and libvirtd packages
+  become: yes
+  package:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - git
+    - libguestfs-tools
+    - libvirt
+    - python2-setuptools
+    - python-tools
+
+- name: Start libvirtd service
+  service:
+      name: libvirtd
+      state: started
+
+- name: Download CentOS image
+  get_url:
+    url: https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2.xz
+    dest: /tmp/centos-orig.qcow2.xz
+
+- name: Extract centos-orig.qcow2.xz
+  command: xz -d -f /tmp/centos-orig.qcow2.xz
+
+- name: Resize the image
+  shell: |
+      qemu-img create -f qcow2 {{ tmp_image_path }} 30G
+      virt-resize --expand /dev/sda1 /tmp/centos-orig.qcow2 {{ tmp_image_path }}
+
+- name: Allow root login
+  shell: "virt-edit -a {{ tmp_image_path }} -e 's/^disable_root: 1/disable_root: 0/' /etc/cloud/cloud.cfg"
+
+- name: Allow SSH
+  shell: "virt-edit -a {{ tmp_image_path }} -e 's/^ssh_pwauth:\\s+0/ssh_pwauth: 1/' /etc/cloud/cloud.cfg"
+
+- name: Disable cloud-init
+  shell: "virt-customize -a {{ tmp_image_path }} --write /etc/cloud/cloud-init.disabled:''"
+
+- name: Set root password
+  shell: "virt-customize -a {{ tmp_image_path }} --root-password password:123456"
+
+- name: SELinux relabel
+  shell: "virt-customize -a {{ tmp_image_path }} --selinux-relabel"
+
+- name: Remove old image file
+  file:
+    path: /tmp/centos-orig.qcow2
+    state: absent
+
+- name: Copy image file to /var/lib/libvirt/images
+  become: yes
+  become_method: sudo
+  copy:
+    src: "{{ tmp_image_path }}"
+    dest: "/var/lib/libvirt/images/{{ libvirt_vm_name }}.qcow2"
+
+- name: Remove image file from /tmp
+  file:
+    path: "{{ tmp_image_path }}"
+    state: absent
+
+- name: Ensure the VM is defined
+  become: yes
+  become_method: sudo
+  virt:
+    name: "{{ libvirt_vm_name }}"
+    command: define
+    xml: "{{ lookup('template', 'vm.xml.j2') }}"
+
+- name: Ensure the VM is running and started at boot
+  become: yes
+  become_method: sudo
+  virt:
+    name: "{{ libvirt_vm_name }}"
+    autostart: true
+    state: running
+
+- name: sleep for 60 seconds and continue with play
+  wait_for: timeout=60
+  delegate_to: localhost
+
+- name: Get host
+  become: yes
+  become_method: sudo
+  shell: virsh domifaddr {{ libvirt_vm_name }} | awk '/ipv4/{print $4}' | cut -d'/' -f1 
+  register: devstack_ip_result
+
+- set_fact:
+    devstack_ip: "{{ devstack_ip_result.stdout }}"
+
+- debug: msg="{{ devstack_ip }}"
+
+- name: Adding devstack to inventory
+  lineinfile:
+    path: hosts
+    line: "devstack ansible_ssh_host={{ devstack_ip }} ansible_ssh_user=root ansible_ssh_pass=123456"
+    state: present
+
+- meta: refresh_inventory

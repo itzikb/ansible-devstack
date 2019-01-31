@@ -1,0 +1,8 @@
+---
+- hosts: localhost
+  roles:
+    - { role: provision }
+
+- hosts: devstack
+  roles:
+   - devstack

@@ -1,0 +1,57 @@
+---
+- name: Install EPEL repo
+  package:
+    name: http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    state: present
+
+- name: Install packages
+  become: yes
+  package:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - git
+    - python2-pip
+    - python2-setuptools
+    - python-tools
+    - tmux
+    - vim
+
+- name: CentOS workaround
+  pip:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - pip
+    - setuptools
+
+- name: Install stack user
+  user:
+    name: stack
+    shell: /bin/bash
+    home: /opt/stack
+    createhome: yes
+
+- name: sudo for stack user
+  copy:
+    dest: /etc/sudoers.d/stack
+    content: "stack ALL=(ALL) NOPASSWD: ALL\n"
+
+- name: Clone devstack repo
+  become_user: stack
+  become: yes
+  git:
+    repo: https://git.openstack.org/openstack-dev/devstack
+    dest: /opt/stack/devstack
+
+- name: Get local.conf
+  become_user: stack
+  become: yes
+  copy:
+    src: kuryr.conf
+    dest: /opt/stack/devstack/local.conf
+
+- name: Run devstack
+  become: yes
+  become_user: stack
+  shell: cd /opt/stack/devstack && ./stack.sh
