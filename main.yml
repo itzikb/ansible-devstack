@@ -6,3 +6,7 @@
 - hosts: devstack
   roles:
    - devstack
+
+- hosts: localhost
+  tasks:
+    - include_tasks: post.yml
