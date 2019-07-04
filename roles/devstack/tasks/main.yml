@@ -16,14 +16,7 @@
     - python-tools
     - tmux
     - vim
-
-- name: CentOS workaround
-  pip:
-    name: "{{ item }}"
-    state: latest
-  with_items:
-    - pip
-    - setuptools
+    - bridge-utils
 
 - name: Install stack user
   user:
@@ -37,6 +30,18 @@
     dest: /etc/sudoers.d/stack
     content: "stack ALL=(ALL) NOPASSWD: ALL\n"
 
+- name: Add docker group and add the stack user to the docker group
+  shell: sudo groupadd docker && sudo gpasswd -a stack docker
+
+- name: CentOS workaround
+  pip:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - pip
+    - setuptools
+
+
 - name: Clone devstack repo
   become_user: stack
   become: yes
@@ -47,8 +52,10 @@
 - name: Get local.conf
   become_user: stack
   become: yes
-  copy:
-    src: kuryr.conf
+  vars:
+    host_ip: "{{ ansible_default_ipv4.address }}"
+  template:
+    src: "{{ local_conf | default('kuryr.conf') }}"
     dest: /opt/stack/devstack/local.conf
 
 - name: Run devstack
