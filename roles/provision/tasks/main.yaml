@@ -10,7 +10,6 @@
     - libvirt
     - python2-setuptools
     - libguestfs-xfs
-    - python-tools
     - gcc
 
 - name: Update system
@@ -21,8 +20,11 @@
 
 - name: Start libvirtd service
   service:
-      name: libvirtd
+      name: "{{ item }}"
       state: started
+      enabled: yes
+  loop:
+    - libvirtd
 
 - name: Download CentOS image
   get_url:
