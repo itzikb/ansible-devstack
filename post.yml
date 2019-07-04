@@ -1,11 +1,7 @@
-- name: Get ipv4 address of the VM
-  shell: sudo virsh domifaddr {{ libvirt_vm_name }} | awk '/ipv4/{print $4}' | cut -d'/' -f1
-  register: vm_address
-
 - name: Add host to /etc/hosts
   become: yes
   lineinfile:
     path: /etc/hosts
     state: present
     regexp: "{{ libvirt_vm_name }}"
-    line: "{{ vm_address.stdout }} {{ libvirt_vm_name}}"
+    line: "{{ hostvars['devstack']['ansible_default_ipv4']['address'] }} {{ libvirt_vm_name}}"
