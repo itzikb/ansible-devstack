@@ -9,7 +9,6 @@
     - libguestfs-tools
     - libvirt
     - python2-setuptools
-    - python-tools
 
 - name: Start libvirtd service
   service:
