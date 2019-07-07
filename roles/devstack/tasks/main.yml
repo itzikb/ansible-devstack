@@ -1,4 +1,14 @@
 ---
+- name: Allow VXLAN
+  iptables:
+    chain: INPUT
+    protocol: udp
+    destination_port: 4789
+    ctstate: NEW
+    syn: match
+    jump: ACCEPT
+    comment: Accept VXLAN connections.
+
 - name: Install EPEL repo
   package:
     name: http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
