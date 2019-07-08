@@ -5,7 +5,6 @@
     protocol: udp
     destination_port: 4789
     ctstate: NEW
-    syn: match
     jump: ACCEPT
     comment: Accept VXLAN connections.
 
