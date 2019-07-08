@@ -1,0 +1,66 @@
+[[local|localrc]]
+# General
+DEST=/opt/stack
+LOGFILE=$DEST/logs/stack.sh.log
+RECLONE=false
+
+disable_all_services
+disable_service kubernetes-controller-manager
+disable_service kubernetes-scheduler
+enable_service n-cpu
+disable_service c-vol
+enable_service peakmem_tracker
+disable_service c-bak
+disable_service tempest
+enable_service kubelet
+enable_service kuryr-daemon
+disable_service kubernetes-api
+disable_service horizon
+disable_service kuryr-kubernetes
+enable_service placement-client
+enable_service q-agt
+disable_service tls-proxy
+enable_service dstat
+ADMIN_PASSWORD="secretadmin"
+DATABASE_HOST="10.176.160.147"
+DATABASE_PASSWORD="secretdatabase"
+DATABASE_TYPE="mysql"
+ERROR_ON_CLONE="False"
+FIXED_RANGE="192.168.150.0/20"
+FLOATING_RANGE="172.24.5.0/24"
+
+GLANCE_HOSTPORT=""{{ controller_host }}":9292"
+HOST_IP=""{{ host_ip }}""
+IPV4_ADDRS_SAFE_TO_USE="192.168.150.0/20"
+KURYR_FORCE_IMAGE_BUILD="True"
+KURYR_K8S_CONTAINERIZED_DEPLOYMENT="True"
+LIBVIRT_TYPE="qemu"
+LOGFILE="/opt/stack/logs/devstacklog.txt"
+LOG_COLOR="False"
+NETWORK_GATEWAY="192.168.150.1"
+NOVA_VNC_ENABLED="True"
+NOVNC_FROM_PACKAGE="True"
+PUBLIC_BRIDGE_MTU="1450"
+PUBLIC_NETWORK_GATEWAY="172.24.5.1"
+Q_HOST=""{{ controller_host }}""
+RABBIT_HOST=""{{ controller_host }}""
+RABBIT_PASSWORD="secretrabbit"
+SERVICE_HOST=""{{ controller_host }}""
+SERVICE_PASSWORD="secretservice"
+VERBOSE="True"
+VERBOSE_NO_TIMESTAMP="True"
+VNCSERVER_LISTEN="0.0.0.0"
+VNCSERVER_PROXYCLIENT_ADDRESS="$HOST_IP"
+LIBS_FROM_GIT=kuryr-kubernetes,swift,keystone,placement,devstack,barbican,cinder,octavia,python-barbicanclient,devstack-gate,python-octaviaclient,devstack-plugin-container,tempest,requirements,nova,kuryr-tempest-plugin,neutron,glance
+enable_plugin devstack-plugin-container https://opendev.org/openstack/devstack-plugin-container
+enable_plugin kuryr-kubernetes https://opendev.org/openstack/kuryr
+
+[[test-config|$TEMPEST_CONFIG]]
+[compute]
+min_compute_nodes = 2
+[[post-config|$NEUTRON_CONF]]
+[DEFAULT]
+global_physnet_mtu = 1450
+[[post-config|$OCTAVIA_CONF]]
+[controller_worker]
+amp_active_retries = 9999
