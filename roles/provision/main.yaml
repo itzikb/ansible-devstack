@@ -83,7 +83,7 @@
 - name: Get host
   become: yes
   become_method: sudo
-  shell: virsh domifaddr {{ libvirt_vm_name }} | awk '/ipv4/{print $4}' | cut -d'/' -f1 
+  shell: virsh domifaddr {{ libvirt_vm_name }} | awk '/ipv4/{print $4}' | cut -d'/' -f1
   register: devstack_ip_result
 
 - set_fact:
@@ -94,7 +94,7 @@
 - name: Adding devstack to inventory
   lineinfile:
     path: hosts
-    line: "devstack ansible_ssh_host={{ devstack_ip }} ansible_ssh_user=root ansible_ssh_pass=123456"
+    line: "{{ libvirt_vm_name }} ansible_ssh_host={{ devstack_ip }} ansible_ssh_user=root ansible_ssh_pass=123456"
     state: present
 
 - meta: refresh_inventory

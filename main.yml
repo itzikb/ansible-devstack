@@ -3,7 +3,7 @@
   roles:
     - { role: provision }
 
-- hosts: devstack
+- hosts: "{{ libvrt_vm_name }}"
   roles:
    - devstack
 

@@ -4,4 +4,4 @@
     path: /etc/hosts
     state: present
     regexp: "{{ libvirt_vm_name }}"
-    line: "{{ hostvars['devstack']['ansible_default_ipv4']['address'] }} {{ libvirt_vm_name}}"
+    line: "{{ hostvars[{{ libvirt_vm_name}}]['ansible_default_ipv4']['address'] }} {{ libvirt_vm_name}}"
