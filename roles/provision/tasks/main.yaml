@@ -108,4 +108,9 @@
     line: "{{libvirt_vm_name}} ansible_ssh_host={{ devstack_ip }} ansible_ssh_user=root ansible_ssh_pass=123456"
     state: present
 
+- name: Modify logrotate for syslog
+  template:
+    src: syslog.j2
+    dest: /etc/logrotate.d/syslog
+
 - meta: refresh_inventory
