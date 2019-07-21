@@ -109,6 +109,7 @@
     state: present
 
 - name: Modify logrotate for syslog
+  become: yes
   template:
     src: syslog.j2
     dest: /etc/logrotate.d/syslog
