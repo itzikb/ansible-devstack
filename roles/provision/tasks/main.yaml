@@ -129,3 +129,9 @@
   copy:
     content: "{{ libvirt_vm_name }}"
     dest: /etc/hostname
+
+- name: Reload service libvirtd to update dnsmasq
+  become: yes
+  systemd:
+    name: libvirtd
+    state: reloaded
