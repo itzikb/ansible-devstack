@@ -50,13 +50,13 @@
     - pip
     - setuptools
 
-
 - name: Clone devstack repo
   become_user: stack
   become: yes
   git:
     repo: https://git.openstack.org/openstack-dev/devstack
     dest: /opt/stack/devstack
+    version: "{{ devstack_version }}"
 
 - name: Get local.conf
   become_user: stack
