@@ -121,3 +121,9 @@
   become: yes
   hostname:
     name: "{{ libvirt_vm_name }}"
+
+- name: Save hostname in /etc/hostname
+  become: yes
+  copy:
+    content: "{{ libvirt_vm_name }}"
+    dest: /etc/hostname
