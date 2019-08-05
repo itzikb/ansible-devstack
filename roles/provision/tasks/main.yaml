@@ -116,3 +116,7 @@
   template:
     src: syslog.j2
     dest: /etc/logrotate.d/syslog
+
+- name: Set hostname
+  hostname:
+    name: "{{ libvirt_vm_name }}"
