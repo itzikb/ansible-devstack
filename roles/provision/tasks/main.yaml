@@ -119,11 +119,13 @@
 
 - name: Set hostname
   become: yes
+  delegate_to: "{{libvirt_vm_name}}"
   hostname:
     name: "{{ libvirt_vm_name }}"
 
 - name: Save hostname in /etc/hostname
   become: yes
+  delegate_to: "{{libvirt_vm_name}}"
   copy:
     content: "{{ libvirt_vm_name }}"
     dest: /etc/hostname
