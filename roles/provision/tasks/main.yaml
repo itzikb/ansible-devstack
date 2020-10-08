@@ -8,15 +8,14 @@
     - git
     - libguestfs-tools
     - libvirt
-    - python2-setuptools
     - libguestfs-xfs
     - gcc
 
-- name: Update system
-  become: yes
-  package:
-    name: '*'
-    state: latest
+#- name: Update system
+#  become: yes
+#  package:
+#    name: '*'
+#    state: latest
 
 - name: Start libvirtd service
   service:
@@ -26,50 +25,54 @@
   loop:
     - libvirtd
 
-- name: Download CentOS image
-  get_url:
-    url: https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2.xz
-    dest: /tmp/centos-orig.qcow2.xz
+- name: Download and build image
+  shell: "cd /tmp/ && virt-builder ubuntu-18.04 --size 30G --format qcow2  --root-password file:/tmp/rootpw -o {{ libvirt_vm_name }}.qcow2 --hostname {{ libvirt_vm_name }} --ssh-inject root && cd -"
+#- name: SELinux relabel
+#  shell: "virt-customize -a {{ tmp_image_path }} --selinux-relabel"
 
-- name: Extract centos-orig.qcow2.xz
-  command: xz -d -f /tmp/centos-orig.qcow2.xz
+#- name: Rename image
+#  become: yes
+#  shell: mv ubuntu-18.04.qcow2 {{ tmp_image_path }}
 
-- name: Resize the image
-  shell: |
-      qemu-img create -f qcow2 {{ tmp_image_path }} 30G
-      virt-resize --expand /dev/sda1 /tmp/centos-orig.qcow2 {{ tmp_image_path }}
+#- name: Allow root login
+#  shell: "virt-edit -a {{ tmp_image_path }} -e 's/^disable_root: 1/disable_root: 0/' /etc/cloud/cloud.cfg"
 
-- name: Allow root login
-  shell: "virt-edit -a {{ tmp_image_path }} -e 's/^disable_root: 1/disable_root: 0/' /etc/cloud/cloud.cfg"
+#- name: Allow SSH
+#  shell: "virt-edit -a {{ tmp_image_path }} -e 's/^ssh_pwauth:\\s+0/ssh_pwauth: 1/' /etc/cloud/cloud.cfg"
 
-- name: Allow SSH
-  shell: "virt-edit -a {{ tmp_image_path }} -e 's/^ssh_pwauth:\\s+0/ssh_pwauth: 1/' /etc/cloud/cloud.cfg"
+#- name: Disable cloud-init
+#  shell: "virt-customize -a {{ tmp_image_path }} --write /etc/cloud/cloud-init.disabled:''"
 
-- name: Disable cloud-init
-  shell: "virt-customize -a {{ tmp_image_path }} --write /etc/cloud/cloud-init.disabled:''"
+#- name: Set root password
+#  shell: "virt-customize -a {{ tmp_image_path }} --root-password password:123456"
 
-- name: Set root password
-  shell: "virt-customize -a {{ tmp_image_path }} --root-password password:123456"
+#######################################################################
+- name: Set network interfaces
+  shell: virt-copy-in -a {{ tmp_image_path }} roles/provision/files/50-network.yaml /etc/netplan
 
-- name: SELinux relabel
-  shell: "virt-customize -a {{ tmp_image_path }} --selinux-relabel"
+- name: Create Host keys
+  shell: virt-customize -a  {{ tmp_image_path }} --run-command 'dpkg-reconfigure openssh-server'
 
-- name: Remove old image file
-  file:
-    path: /tmp/centos-orig.qcow2
-    state: absent
+- name: Set sshd_config
+  shell: virt-copy-in -a {{ tmp_image_path }} roles/provision/files/sshd_config /etc/ssh
 
-- name: Copy image file to /var/lib/libvirt/images
+
+- name: Move image file to /var/lib/libvirt/images
   become: yes
-  become_method: sudo
-  copy:
-    src: "{{ tmp_image_path }}"
-    dest: "/var/lib/libvirt/images/{{ libvirt_vm_name }}.qcow2"
+  shell: "mv {{ tmp_image_path }} /var/lib/libvirt/images/{{ libvirt_vm_name }}.qcow2"
+#######################################################################
 
-- name: Remove image file from /tmp
-  file:
-    path: "{{ tmp_image_path }}"
-    state: absent
+#- name: Copy image file to /var/lib/libvirt/images
+#  become: yes
+#  become_method: sudo
+#  copy:
+#    src: "{{ tmp_image_path }}"
+#    dest: "/var/lib/libvirt/images/{{ libvirt_vm_name }}.qcow2"
+
+#- name: Remove image file from /tmp
+#  file:
+#    path: "{{ tmp_image_path }}"
+#    state: absent
 
 - name: Ensure the VM is defined
   become: yes
@@ -105,30 +108,19 @@
 - name: Adding devstack to inventory
   lineinfile:
     path: hosts
-    line: "{{libvirt_vm_name}} ansible_ssh_host={{ devstack_ip }} ansible_ssh_user=root ansible_ssh_pass=123456"
+    line: "{{libvirt_vm_name}} ansible_ssh_host={{ devstack_ip }} ansible_ssh_user=root"
     state: present
 
 - meta: refresh_inventory
 
-- name: Modify logrotate for syslog
-  become: yes
-  delegate_to: "{{libvirt_vm_name}}"
-  template:
-    src: syslog.j2
-    dest: /etc/logrotate.d/syslog
+#- name: install python 2
+#  become: yes
+#  delegate_to: "{{libvirt_vm_name}}"
+#  raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
 
-- name: Set hostname
-  become: yes
-  delegate_to: "{{libvirt_vm_name}}"
-  hostname:
-    name: "{{ libvirt_vm_name }}"
-
-- name: Save hostname in /etc/hostname
-  become: yes
-  delegate_to: "{{libvirt_vm_name}}"
-  copy:
-    content: "{{ libvirt_vm_name }}"
-    dest: /etc/hostname
+#- name: Set hostname
+#  become: yes
+#  shell: "hostnamectl set-hostname {{ libvirt_vm_name }}"
 
 - name: Reload service libvirtd to update dnsmasq
   become: yes
