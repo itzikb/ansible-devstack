@@ -29,21 +29,6 @@
   reboot:
     reboot_timeout: 3600
 
-    #- name: sleep for 120 seconds and continue with play
-    #  wait_for: timeout=120
-    #  delegate_to: localhost
-
-#- name: Install pip
-#  become: true
-#  shell: apt-get -y install python3-pip
-#  environment:
-#    DEBIAN_FRONTEND: noninteractive
-
-#- name: Set python3 as default
-#  become: yes
-#  shell: update-alternatives --install /usr/bin/python python /usr/bin/python3 20
-
-
 - name: Install packages
   become: yes
   package:
@@ -51,17 +36,9 @@
     state: latest
   with_items:
     - git
-#    - python3-pip
-#    - python-pip
-#    - python3-setuptools
-#    - python-tools
     - tmux
     - vim
     - bridge-utils
-
-#- name: Set python3 as default
-#  become: yes
-#  shell: update-alternatives --install /usr/local/bin/pip pip /usr/bin/pip3 20
 
 - name: Install stack user
   user:
@@ -78,21 +55,12 @@
 - name: Add docker group and add the stack user to the docker group
   shell: sudo groupadd docker && sudo gpasswd -a stack docker
 
-#- name: CentOS workaround
-#  pip:
-#    name: "{{ item }}"
-#    state: latest
-#  with_items:
-#    - pip
-#    - setuptools
-
 - name: Clone devstack repo
   become_user: stack
   become: yes
   git:
-    repo: https://git.openstack.org/openstack-dev/devstack
+    repo: cd /opt/stack/devstack && ./stack.sh
     dest: /opt/stack/devstack
-    version: "{{ devstack_version }}"
 
 - name: Get local.conf
   become_user: stack

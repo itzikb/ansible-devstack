@@ -25,28 +25,21 @@
   loop:
     - libvirtd
 
-- name: Download and build image
-  shell: "cd /tmp/ && virt-builder ubuntu-18.04 --size 30G --format qcow2  --root-password file:/tmp/rootpw -o {{ libvirt_vm_name }}.qcow2 --hostname {{ libvirt_vm_name }} --ssh-inject root && cd -"
-#- name: SELinux relabel
-#  shell: "virt-customize -a {{ tmp_image_path }} --selinux-relabel"
+- name: Download image
+  shell: "cd /tmp/; wget -c https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img -O {{ tmp_image_path }}"
 
-#- name: Rename image
-#  become: yes
-#  shell: mv ubuntu-18.04.qcow2 {{ tmp_image_path }}
+- name: Allow root login
+  shell: "virt-edit -a {{ tmp_image_path }} -e 's/^disable_root: 1/disable_root: 0/' /etc/cloud/cloud.cfg"
 
-#- name: Allow root login
-#  shell: "virt-edit -a {{ tmp_image_path }} -e 's/^disable_root: 1/disable_root: 0/' /etc/cloud/cloud.cfg"
+- name: Allow SSH
+  shell: "virt-edit -a {{ tmp_image_path }} -e 's/^ssh_pwauth:\\s+0/ssh_pwauth: 1/' /etc/cloud/cloud.cfg"
 
-#- name: Allow SSH
-#  shell: "virt-edit -a {{ tmp_image_path }} -e 's/^ssh_pwauth:\\s+0/ssh_pwauth: 1/' /etc/cloud/cloud.cfg"
+- name: Disable cloud-init
+  shell: "virt-customize -a {{ tmp_image_path }} --write /etc/cloud/cloud-init.disabled:''"
 
-#- name: Disable cloud-init
-#  shell: "virt-customize -a {{ tmp_image_path }} --write /etc/cloud/cloud-init.disabled:''"
+- name: Set root password
+  shell: "virt-customize -a {{ tmp_image_path }} --root-password password:123456"
 
-#- name: Set root password
-#  shell: "virt-customize -a {{ tmp_image_path }} --root-password password:123456"
-
-#######################################################################
 - name: Set network interfaces
   shell: virt-copy-in -a {{ tmp_image_path }} roles/provision/files/50-network.yaml /etc/netplan
 
@@ -56,23 +49,9 @@
 - name: Set sshd_config
   shell: virt-copy-in -a {{ tmp_image_path }} roles/provision/files/sshd_config /etc/ssh
 
-
 - name: Move image file to /var/lib/libvirt/images
   become: yes
   shell: "mv {{ tmp_image_path }} /var/lib/libvirt/images/{{ libvirt_vm_name }}.qcow2"
-#######################################################################
-
-#- name: Copy image file to /var/lib/libvirt/images
-#  become: yes
-#  become_method: sudo
-#  copy:
-#    src: "{{ tmp_image_path }}"
-#    dest: "/var/lib/libvirt/images/{{ libvirt_vm_name }}.qcow2"
-
-#- name: Remove image file from /tmp
-#  file:
-#    path: "{{ tmp_image_path }}"
-#    state: absent
 
 - name: Ensure the VM is defined
   become: yes
@@ -108,19 +87,10 @@
 - name: Adding devstack to inventory
   lineinfile:
     path: hosts
-    line: "{{libvirt_vm_name}} ansible_ssh_host={{ devstack_ip }} ansible_ssh_user=root"
+    line: "{{libvirt_vm_name}} ansible_ssh_host={{ devstack_ip }} ansible_ssh_user=root ansible_ssh_password=123456"
     state: present
 
 - meta: refresh_inventory
-
-#- name: install python 2
-#  become: yes
-#  delegate_to: "{{libvirt_vm_name}}"
-#  raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
-
-#- name: Set hostname
-#  become: yes
-#  shell: "hostnamectl set-hostname {{ libvirt_vm_name }}"
 
 - name: Reload service libvirtd to update dnsmasq
   become: yes
