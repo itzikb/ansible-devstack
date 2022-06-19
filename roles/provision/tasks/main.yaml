@@ -26,53 +26,58 @@
     - libvirtd
 
 - name: Download image
-  shell: "cd /tmp/; wget -c https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img -O {{ tmp_image_path }}"
+  shell: cd /tmp/; wget -c https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img -O /tmp/focal-server-cloudimg-amd64.img
 
-- name: Allow root login
-  shell: "virt-edit -a {{ tmp_image_path }} -e 's/^disable_root: 1/disable_root: 0/' /etc/cloud/cloud.cfg"
+- name: Creating a disk image for a new VM
+  shell: qemu-img create -f qcow2 {{ tmp_image_path }} 20G
+ 
+- name: Resizing file system
+  shell: "virt-resize --expand /dev/sda1 /tmp/focal-server-cloudimg-amd64.img {{ tmp_image_path }}"
 
-- name: Allow SSH
-  shell: "virt-edit -a {{ tmp_image_path }} -e 's/^ssh_pwauth:\\s+0/ssh_pwauth: 1/' /etc/cloud/cloud.cfg"
+- name: Modifying root user credentials
+  shell: virt-customize -a {{ tmp_image_path }} --root-password password:${VM_ROOT_PASS} --uninstall cloud-init
 
-- name: Disable cloud-init
-  shell: "virt-customize -a {{ tmp_image_path }} --write /etc/cloud/cloud-init.disabled:''"
+  #For some reason ssh service was failing to start in ubuntu 20.04. Reinstalling ssh service fixes the issue.
+- name: Modifying ssh installation
+  shell: virt-customize -a {{ tmp_image_path }} --run-command 'apt-get purge openssh-server -y && apt-get install openssh-server -y'
 
-- name: Set root password
-  shell: "virt-customize -a {{ tmp_image_path }} --root-password password:123456"
+- name: Create user stack
+  shell: "virt-customize -a {{ tmp_image_path }} --run-command 'useradd -s /bin/bash -d /opt/stack -m stack'"
+  
+- name: Add user stack to sudoers
+  shell: "virt-customize -a {{ tmp_image_path }} --run-command 'echo \"stack ALL=(ALL) NOPASSWD: ALL\" | tee /etc/sudoers.d/stack '"
+  
+- name: Set password 'stack' for user 'stack'
+  shell: virt-customize -a {{ tmp_image_path }} --run-command 'echo "stack:stack" | chpasswd'
+
+- name: Injecting ssh key for user 'stack'
+  shell: virt-customize -a {{ tmp_image_path }} --ssh-inject stack:file:$HOME/.ssh/id_rsa.pub
+
+- name: Setting hostname
+  shell: virt-customize -a {{ tmp_image_path }} --hostname {{ libvirt_vm_name }}
+
+  # For some reason the resizing of file systems (see above) breaks image boot. This step fixes VM boot.
+- name: Updating grub in the VM image
+  shell: virt-customize -a {{ tmp_image_path }} --run-command 'grub-install /dev/sda'
 
 - name: Set network interfaces
   shell: virt-copy-in -a {{ tmp_image_path }} roles/provision/files/50-network.yaml /etc/netplan
 
-- name: Create Host keys
-  shell: virt-customize -a  {{ tmp_image_path }} --run-command 'dpkg-reconfigure openssh-server'
-
-- name: Set sshd_config
-  shell: virt-copy-in -a {{ tmp_image_path }} roles/provision/files/sshd_config /etc/ssh
+  #- name: Set sshd_config
+  #  shell: virt-copy-in -a {{ tmp_image_path }} roles/provision/files/sshd_config /etc/ssh
 
 - name: Move image file to /var/lib/libvirt/images
   become: yes
   shell: "mv {{ tmp_image_path }} /var/lib/libvirt/images/{{ libvirt_vm_name }}.qcow2"
-
-- name: Ensure the VM is defined
+  
+- name: Starting VM
   become: yes
-  become_method: sudo
-  virt:
-    name: "{{ libvirt_vm_name }}"
-    command: define
-    xml: "{{ lookup('template', 'vm.xml.j2') }}"
-
-- name: Ensure the VM is running and started at boot
-  become: yes
-  become_method: sudo
-  virt:
-    name: "{{ libvirt_vm_name }}"
-    autostart: true
-    state: running
+  shell: virt-install --ram {{ libvirt_vm_memory_mb }} --vcpus 2 --disk path=/var/lib/libvirt/images/{{ libvirt_vm_name }}.qcow2,device=disk,bus=virtio,format=qcow2 --import --noautoconsole --vnc --network network:default --name {{ libvirt_vm_name }}
 
 - name: sleep for 120 seconds and continue with play
   wait_for: timeout=120
   delegate_to: localhost
-
+  
 - name: Get host
   become: yes
   become_method: sudo
@@ -87,7 +92,7 @@
 - name: Adding devstack to inventory
   lineinfile:
     path: hosts
-    line: "{{libvirt_vm_name}} ansible_ssh_host={{ devstack_ip }} ansible_ssh_user=root ansible_ssh_password=123456"
+    line: "{{libvirt_vm_name}} ansible_ssh_host={{ devstack_ip }} ansible_ssh_user=stack ansible_ssh_password=stack"
     state: present
 
 - meta: refresh_inventory

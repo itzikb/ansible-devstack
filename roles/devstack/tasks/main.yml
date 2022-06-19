@@ -1,7 +1,6 @@
 ---
-- name: boo
-  shell: "w"
 - name: Allow VXLAN
+  become: yes
   iptables:
     chain: INPUT
     protocol: udp
@@ -52,15 +51,32 @@
     dest: /etc/sudoers.d/stack
     content: "stack ALL=(ALL) NOPASSWD: ALL\n"
 
-- name: Add docker group and add the stack user to the docker group
-  shell: sudo groupadd docker && sudo gpasswd -a stack docker
+- name: Ensure group "docker" exists
+  become: yes
+  ansible.builtin.group:
+    name: docker
+    state: present  
+
+- name: Ensure user "docker" exists
+  become: yes
+  ansible.builtin.user:
+    name: docker
+    state: present  
+
+#- name: Clone devstack repo
+#  become_user: stack
+#  become: yes
+#  git:
+#    repo: https://opendev.org/openstack/devstack.git
+#    dest: /opt/stack/devstack
 
 - name: Clone devstack repo
   become_user: stack
   become: yes
-  git:
-    repo: cd /opt/stack/devstack && ./stack.sh
-    dest: /opt/stack/devstack
+  shell: 
+    cmd: git clone https://opendev.org/openstack/devstack.git
+    chdir: /opt/stack
+
 
 - name: Get local.conf
   become_user: stack
