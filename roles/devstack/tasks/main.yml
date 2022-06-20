@@ -74,9 +74,8 @@
   become_user: stack
   become: yes
   shell: 
-    cmd: git clone https://opendev.org/openstack/devstack.git
+    cmd: git clone -b {{ devstack_branch }} https://opendev.org/openstack/devstack.git
     chdir: /opt/stack
-
 
 - name: Get local.conf
   become_user: stack
@@ -84,7 +83,7 @@
   vars:
     host_ip: "{{ ansible_default_ipv4.address }}"
   template:
-    src: "{{ local_conf | default('kuryr.conf') }}"
+    src: "{{ local_conf | default('local.conf') }}"
     dest: /opt/stack/devstack/local.conf
 
 - name: Run devstack
