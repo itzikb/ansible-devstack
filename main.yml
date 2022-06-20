@@ -2,11 +2,17 @@
 - hosts: localhost
   roles:
     - { role: provision }
+  tags:
+    - provision
 
 - hosts: "{{ libvirt_vm_name }}"
   roles:
+   - devstack
+  tags:
    - devstack
 
 - hosts: localhost
   tasks:
     - include_tasks: post.yml
+  tags:
+    - post
