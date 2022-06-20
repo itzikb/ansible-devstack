@@ -2,20 +2,13 @@
 - name: Install libguestfs-tools and libvirtd packages
   become: yes
   package:
-    name: "{{ item }}"
-    state: latest
-  with_items:
-    - git
-    - libguestfs-tools
-    - libvirt
-    - libguestfs-xfs
-    - gcc
-
-#- name: Update system
-#  become: yes
-#  package:
-#    name: '*'
-#    state: latest
+    name:
+      - git
+      - libguestfs-tools
+      - libvirt
+      - libguestfs-xfs
+      - gcc
+  state: latest
 
 - name: Start libvirtd service
   service:
@@ -26,13 +19,15 @@
     - libvirtd
 
 - name: Download image
-  shell: cd /tmp/; wget -c https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img -O /tmp/focal-server-cloudimg-amd64.img
+  get_url:
+    url: {{ image_url }}
+    dest: {{ downloaded_image_path }}
 
 - name: Creating a disk image for a new VM
   shell: qemu-img create -f qcow2 {{ tmp_image_path }} 20G
  
 - name: Resizing file system
-  shell: "virt-resize --expand /dev/sda1 /tmp/focal-server-cloudimg-amd64.img {{ tmp_image_path }}"
+  shell: "virt-resize --expand /dev/sda1 {{ downloaded_image_path }} {{ tmp_image_path }}"
 
 - name: Modifying root user credentials
   shell: virt-customize -a {{ tmp_image_path }} --root-password password:${VM_ROOT_PASS} --uninstall cloud-init
@@ -62,9 +57,6 @@
 
 - name: Set network interfaces
   shell: virt-copy-in -a {{ tmp_image_path }} roles/provision/files/50-network.yaml /etc/netplan
-
-  #- name: Set sshd_config
-  #  shell: virt-copy-in -a {{ tmp_image_path }} roles/provision/files/sshd_config /etc/ssh
 
 - name: Move image file to /var/lib/libvirt/images
   become: yes
