@@ -8,7 +8,7 @@
       - libvirt
       - libguestfs-xfs
       - gcc
-  state: latest
+    state: latest
 
 - name: Start libvirtd service
   service:
@@ -20,8 +20,8 @@
 
 - name: Download image
   get_url:
-    url: {{ image_url }}
-    dest: {{ downloaded_image_path }}
+    url: "{{ image_url }}"
+    dest: "{{ downloaded_image_path }}"
 
 - name: Creating a disk image for a new VM
   shell: qemu-img create -f qcow2 {{ tmp_image_path }} 20G
@@ -56,12 +56,26 @@
   shell: virt-customize -a {{ tmp_image_path }} --run-command 'grub-install /dev/sda'
 
 - name: Set network interfaces
-  shell: virt-copy-in -a {{ tmp_image_path }} roles/provision/files/50-network.yaml /etc/netplan
+  vkhitrin.libguestfs.guestfs_copy_in:
+    image: "{{ tmp_image_path }}"
+    src: roles/provision/files/50-network.yaml
+    dest: /etc/netplan/
 
 - name: Move image file to /var/lib/libvirt/images
   become: yes
-  shell: "mv {{ tmp_image_path }} /var/lib/libvirt/images/{{ libvirt_vm_name }}.qcow2"
-  
+  copy:
+    src: "{{ tmp_image_path }}"
+    dest:  "/var/lib/libvirt/images/{{ libvirt_vm_name }}.qcow2"
+
+- name: Remove temp files
+  become: yes
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ tmp_image_path }}"
+    - "{{ downloaded_image_path }}"
+
 - name: Starting VM
   become: yes
   shell: virt-install --ram {{ libvirt_vm_memory_mb }} --vcpus 2 --disk path=/var/lib/libvirt/images/{{ libvirt_vm_name }}.qcow2,device=disk,bus=virtio,format=qcow2 --import --noautoconsole --vnc --network network:default --name {{ libvirt_vm_name }}
