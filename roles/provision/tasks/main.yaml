@@ -83,7 +83,7 @@
 
 - name: Starting VM
   become: yes
-  shell: virt-install --ram {{ libvirt_vm_memory_mb }} --vcpus 2 --disk path=/var/lib/libvirt/images/{{ libvirt_vm_name }}.qcow2,device=disk,bus=virtio,format=qcow2 --import --noautoconsole --vnc --network network:default --name {{ libvirt_vm_name }}
+  shell: virt-install --ram {{ libvirt_vm_memory_mb }} --vcpus {{ libvirt_vm_vcpus }} --disk path=/var/lib/libvirt/images/{{ libvirt_vm_name }}.qcow2,device=disk,bus=virtio,format=qcow2 --import --noautoconsole --vnc --network network:default --name {{ libvirt_vm_name }}
 
 - name: sleep for 120 seconds and continue with play
   wait_for: timeout=120
