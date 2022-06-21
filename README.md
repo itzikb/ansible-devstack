@@ -2,6 +2,12 @@
 
 Install devstack on inside a virtual machine using libivrt
 
+### prerequisites
+The vkhitrin.libguestfs collection should be installed 
+```
+ansible-galaxy collection install vkhitrin.libguestfs
+```
+
 ### How to run
 It's advisable to create a YAML file such as myfile.yml
 ```
@@ -15,13 +21,13 @@ And then run
 $ ansible-playbook -i hosts -e @myvm.yml main.yml
 ```
 
-You then can't find out the IP of the vm by running
+You then can find out the IP of the vm by running
 ```
 $ sudo virsh doifaddr myvm
 ```
+Or by looking at the hosts file
 
-You can then connect using SSH and change to the stack user
+You can then connect using SSH using the stack user
 ```
-$ ssh root@<vm ip> (pass:123456)
-$ su - stack
+$ ssh stack@<vm ip>
 ```
