@@ -29,21 +29,24 @@
 - name: Resizing file system
   shell: "virt-resize --expand /dev/sda1 {{ downloaded_image_path }} {{ tmp_image_path }}"
 
-- name: Modifying root user credentials
-  shell: virt-customize -a {{ tmp_image_path }} --root-password password:${VM_ROOT_PASS} --uninstall cloud-init
-
   #For some reason ssh service was failing to start in ubuntu 20.04. Reinstalling ssh service fixes the issue.
 - name: Modifying ssh installation
-  shell: virt-customize -a {{ tmp_image_path }} --run-command 'apt-get purge openssh-server -y && apt-get install openssh-server -y'
+  vkhitrin.libguestfs.guestfs_command:
+    image: "{{ tmp_image_path }}"
+    shell: "apt-get purge openssh-server -y && apt-get install openssh-server -y"
 
 - name: Create user stack
-  shell: "virt-customize -a {{ tmp_image_path }} --run-command 'useradd -s /bin/bash -d /opt/stack -m stack'"
+  vkhitrin.libguestfs.guestfs_command:
+    image: "{{ tmp_image_path }}"
+    shell: "useradd -s /bin/bash -d /opt/stack -m stack"
   
 - name: Add user stack to sudoers
   shell: "virt-customize -a {{ tmp_image_path }} --run-command 'echo \"stack ALL=(ALL) NOPASSWD: ALL\" | tee /etc/sudoers.d/stack '"
   
 - name: Set password 'stack' for user 'stack'
-  shell: virt-customize -a {{ tmp_image_path }} --run-command 'echo "stack:stack" | chpasswd'
+  vkhitrin.libguestfs.guestfs_command:
+    image: "{{ tmp_image_path }}"
+    shell: 'echo "stack:stack" | chpasswd'
 
 - name: Injecting ssh key for user 'stack'
   shell: virt-customize -a {{ tmp_image_path }} --ssh-inject stack:file:$HOME/.ssh/id_rsa.pub
@@ -53,7 +56,9 @@
 
   # For some reason the resizing of file systems (see above) breaks image boot. This step fixes VM boot.
 - name: Updating grub in the VM image
-  shell: virt-customize -a {{ tmp_image_path }} --run-command 'grub-install /dev/sda'
+  vkhitrin.libguestfs.guestfs_command:
+    image: "{{ tmp_image_path }}"
+    shell: "grub-install /dev/sda"
 
 - name: Set network interfaces
   vkhitrin.libguestfs.guestfs_copy_in:
