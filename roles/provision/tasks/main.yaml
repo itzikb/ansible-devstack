@@ -81,9 +81,18 @@
     - "{{ tmp_image_path }}"
     - "{{ downloaded_image_path }}"
 
+- name: Look for the image OS for optimzation
+  shell: osinfo-query os |grep -q {{ image_os }}
+  register: osinfo
+  failed_when: osinfo.rc == 2
+
+- name: Add OS variant to virt-install
+  set_fact:
+    install_params: "{{ (osinfo.rc ==0) | ternary('--os-variant ' + image_os , '')}}"
+
 - name: Starting VM
   become: yes
-  shell: virt-install --ram {{ libvirt_vm_memory_mb }} --vcpus {{ libvirt_vm_vcpus }} --disk path=/var/lib/libvirt/images/{{ libvirt_vm_name }}.qcow2,device=disk,bus=virtio,format=qcow2 --import --noautoconsole --vnc --network network:default --name {{ libvirt_vm_name }}
+  shell: virt-install {{ install_params }} --ram {{ libvirt_vm_memory_mb }} --vcpus {{ libvirt_vm_vcpus }} --disk path=/var/lib/libvirt/images/{{ libvirt_vm_name }}.qcow2,device=disk,bus=virtio,format=qcow2 --import --noautoconsole --vnc --network network:default --name {{ libvirt_vm_name }}
 
 - name: Get host
   become: yes

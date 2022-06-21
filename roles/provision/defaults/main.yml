@@ -1,4 +1,5 @@
 image_url: https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img
+image_os: 'ubuntu20.04'
 downloaded_image_path: /tmp/image.img
 libvirt_vm_name: devstack
 libvirt_vm_memory_mb: 8096
