@@ -63,13 +63,6 @@
     name: docker
     state: present  
 
-#- name: Clone devstack repo
-#  become_user: stack
-#  become: yes
-#  git:
-#    repo: https://opendev.org/openstack/devstack.git
-#    dest: /opt/stack/devstack
-
 - name: Clone devstack repo
   become_user: stack
   become: yes
