@@ -22,6 +22,10 @@ $ ansible-playbook -i hosts -e @myvm.yml main.yml
 ```
 It's possible to run only provisioning using the **provison** tag or devstack installation by using the **devstack** tag  
 
+### Devstack
+The default local.conf is taken from roles/devstack/templates/local.conf 
+It's possible to supply a different local.conf by either overriding the file or uding the **local_conf** variable to point one with a different name.  
+
 ### Connecting to the VM
 You can find out the IP of the vm by running
 ```
