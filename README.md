@@ -26,6 +26,12 @@ It's possible to run only provisioning using the **provison** tag or devstack in
 The default local.conf is taken from roles/devstack/templates/local.conf 
 It's possible to supply a different local.conf by either overriding the file or uding the **local_conf** variable to point one with a different name.  
 
+### local.conf templates
+Currently there are 3 templates:  
+- local.conf (The basic devstack)
+- kuryr.conf (Including Kuryr)
+- designate.conf (Including Designate)
+
 ### Connecting to the VM
 You can find out the IP of the vm by running
 ```
