@@ -1,6 +1,6 @@
 # ansible-devstack
 
-Install devstack on inside a virtual machine using libivrt
+Provision a VM (As a default Ubuntu 20.04) and install a devstack inside the VM using libivrt
 
 ### prerequisites
 The vkhitrin.libguestfs collection should be installed 
@@ -20,8 +20,10 @@ And then run
 ```
 $ ansible-playbook -i hosts -e @myvm.yml main.yml
 ```
+It's possible to run only provisioning using the **provison** tag or devstack installation by using the **devstack** tag  
 
-You then can find out the IP of the vm by running
+### Connecting to the VM
+You can find out the IP of the vm by running
 ```
 $ sudo virsh doifaddr myvm
 ```
@@ -31,3 +33,6 @@ You can then connect using SSH using the stack user
 ```
 $ ssh stack@<vm ip>
 ```
+
+### Cleanup
+If you delete the VM and want to reprovsion it's important to remove the line with the VM name from the hosts file  
