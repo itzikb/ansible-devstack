@@ -24,7 +24,7 @@ It's possible to run only provisioning using the **provison** tag or devstack in
 
 ### Devstack
 The default local.conf is taken from roles/devstack/templates/local.conf 
-It's possible to supply a different local.conf by either overriding the file or uding the **local_conf** variable to point one with a different name.  
+It's possible to supply a different local.conf by either overriding the file or passing the **local_conf** variable to point one with a different name.  
 
 ### local.conf templates
 Currently there are 3 templates:  
