@@ -8,6 +8,7 @@
       - libvirt
       - libguestfs-xfs
       - gcc
+      - python3-libguestfs
     state: latest
 
 - name: Start libvirtd service
