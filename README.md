@@ -28,9 +28,16 @@ It's possible to supply a different local.conf by either overriding the file or 
 
 ### local.conf templates
 Currently there are 3 templates:  
-- local.conf (The basic devstack)
+- local.conf (default, The basic devstack)
 - kuryr.conf (Including Kuryr)
 - designate.conf (Including Designate)
+
+If you want to use **kuryr.conf** or **designate.conf** you need to pass set the local_conf variable.  
+For example:  
+
+```
+$ ansible-playbook -i hosts -e @myfile.yml -e local_conf=designate.conf main.yml 
+```
 
 ### Connecting to the VM
 You can find out the IP of the vm by running
