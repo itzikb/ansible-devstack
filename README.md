@@ -18,7 +18,7 @@ tmp_image_path: /tmp/myvm.qcow2
 ```
 And then run
 ```
-$ ansible-playbook -i hosts -e @myvm.yml main.yml
+$ ansible-playbook -i hosts -e @myfile.yml main.yml
 ```
 It's possible to run only provisioning using the **provison** tag or devstack installation by using the **devstack** tag  
 
