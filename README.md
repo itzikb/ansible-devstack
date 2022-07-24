@@ -32,7 +32,7 @@ Currently there are 3 templates:
 - kuryr.conf (Including Kuryr)
 - designate.conf (Including Designate)
 
-If you want to use **kuryr.conf** or **designate.conf** you need to pass set the local_conf variable.  
+If you want to use **kuryr.conf** or **designate.conf** you need to set the local_conf variable.  
 For example:  
 
 ```
