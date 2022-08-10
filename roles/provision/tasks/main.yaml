@@ -61,10 +61,15 @@
     image: "{{ tmp_image_path }}"
     shell: "grub-install /dev/sda"
 
+- name: Prepare the network file
+  template:  
+    src: 50-network.yaml.j2
+    dest: /tmp/50-network.yaml
+
 - name: Set network interfaces
   vkhitrin.libguestfs.guestfs_copy_in:
     image: "{{ tmp_image_path }}"
-    src: roles/provision/files/50-network.yaml
+    src: /tmp/50-network.yaml
     dest: /etc/netplan/
 
 - name: Copy the image file to /var/lib/libvirt/images

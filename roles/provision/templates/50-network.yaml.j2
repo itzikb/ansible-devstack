@@ -1,0 +1,10 @@
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+  {%if ansible_distribution_version is version('8.4', '>=') %}
+    enp1s0:
+  {%else%}
+    ens3:
+  {%endif%}
+      dhcp4: true
