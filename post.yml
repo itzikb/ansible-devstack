@@ -1,7 +1,0 @@
-- name: Add host to /etc/hosts
-  become: yes
-  lineinfile:
-    path: /etc/hosts
-    state: present
-    regexp: "{{ libvirt_vm_name }}"
-    line: "{{ hostvars[libvirt_vm_name]['ansible_ssh_host']}} {{ libvirt_vm_name }}"

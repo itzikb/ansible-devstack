@@ -10,9 +10,3 @@
    - devstack
   tags:
    - devstack
-
-- hosts: localhost
-  tasks:
-    - include_tasks: post.yml
-  tags:
-    - post
