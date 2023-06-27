@@ -121,7 +121,7 @@
 - name: Adding devstack to inventory
   lineinfile:
     path: hosts
-    line: "{{libvirt_vm_name}} ansible_ssh_host={{ devstack_ip }} ansible_ssh_user=stack ansible_ssh_password=stack"
+    line: "{{libvirt_vm_name}} ansible_ssh_host={{ devstack_ip }} ansible_ssh_user=stack"
     state: present
 
 - meta: refresh_inventory
